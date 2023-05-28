@@ -1,0 +1,22 @@
+table {
+    margin-right: auto;
+    margin-left: auto;
+    border-collapse: collapse;
+}
+#board {
+    height: 90vh;
+    width: 90vh;
+}
+td {
+    color: black;
+    border: 2px solid black;
+    text-align: center;
+    width: 10vh;
+    height: 10vh;
+    font-weight: bold;
+    font-size: 5vh;
+    font-family: Verdana, serif;
+}
+.defined {
+    background-color: darkgray;
+}
