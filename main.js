@@ -211,56 +211,6 @@ class Solver{
         return this.solve(its+1)
     }
 
-    check_crs(){
-        let moves = []
-        for(let r of Array(9).keys()){
-            let nums = [...this.all_nums]
-            let row = this.board.numbers[r]
-            if(row.flat().clean("-").length === 8){
-                for(let i of nums){
-                    if(row.flat().includes(i)){
-                        nums[i-1] = 10
-                    }
-                }
-                moves.push([r, row.flat().indexOf("-"), nums.clean(10)[0]])
-            }
-        }
-        for(let c of Array(9).keys()){
-            let nums = [this.all_nums]
-            let column = this.board.getColumn(c)
-            if(column.flat().clean("-").length === 8){
-                for(let i of nums){
-                    if(column.flat().includes(i)){
-                        nums[i-1] = 10
-                    }
-                }
-                moves.push([column.flat().indexOf("-"), c, nums.clean(10)[0]])
-            }
-        }
-
-
-
-        return moves
-    }
-
-    check_bxs(){
-        let moves = []
-
-        for(let box of this.board.boxes.flat()){
-            let val = 0
-            let nums = [...this.all_nums]
-            if(box.numbers.flat().clean("-").length === 8){
-                for(let i of nums){
-                    if(!box.numbers.flat().includes(i)){
-                        val = i
-                    }
-                }
-                moves.push([box.position[0]*3 + Math.floor(box.numbers.flat().indexOf("-")/3), box.position[1]*3 + box.numbers.flat().indexOf("-")%3, val])
-            }
-        }
-
-        return moves
-    }
 
     one_option(map){
         let moves = []
@@ -299,6 +249,8 @@ class Solver{
                 poss_map[r].push(total)
             }
         }
+        // poss_map = this.remove_cycles(poss_map)
+
         return poss_map
     }
 
@@ -354,6 +306,114 @@ class Solver{
         return moves;
     }
 
+    remove_cycles(map){
+        for(let r of Array(9).keys()){
+            for(let c of Array(9).keys()){
+                // For each item in a row
+                // Compare to each other item
+                for(let c2 of Array(9).keys()){
+                    if(c === c2) continue
+                    let result = this.is_cycle([map[r][c], map[r][c2]])
+                    if(result[0]){
+                        for(let e of Array(map[r].length).keys()){
+                            if([c, c2].includes(e)) continue
+                            let element = map[r][e]
+                            if(element === "0") continue
+                            console.log(r)
+                            console.log(result[1])
+                            result[1].forEach(n => element.remove(n));
+                            if(element.length === 0){
+                                map[r][e] = "0"
+                            }
+                        }
+                    }
+                    for(let c3 of Array(9).keys()){
+                        if(c === c2 || c2 === c3 || c === c3) continue
+                        let result = this.is_cycle([map[r][c], map[r][c2], map[r][c3]])
+                        if(result[0]){
+                            for(let e of Array(map[r].length).keys()){
+                                if([c, c2, c3].includes(e)) continue
+                                let element = map[r][e]
+                                if(element === "0") continue
+                                console.log(r + " (3 way)")
+                                console.log(result[1])
+                                result[1].forEach(n => element.remove(n));
+                                if(element.length === 0){
+                                    map[r][e] = "0"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return map
+    }
+
+    is_cycle(profiles) {
+        let total = []
+        for (let p of profiles) {
+            if(p === "0"){
+                return [false, new Set()]
+            }
+            total = total.concat(p)
+        }
+        return [(new Set(total)).size === profiles.length, new Set(total)]
+    }
+
+    //Depreciated
+    check_crs(){
+        let moves = []
+        for(let r of Array(9).keys()){
+            let nums = [...this.all_nums]
+            let row = this.board.numbers[r]
+            if(row.flat().clean("-").length === 8){
+                for(let i of nums){
+                    if(row.flat().includes(i)){
+                        nums[i-1] = 10
+                    }
+                }
+                moves.push([r, row.flat().indexOf("-"), nums.clean(10)[0]])
+            }
+        }
+        for(let c of Array(9).keys()){
+            let nums = [this.all_nums]
+            let column = this.board.getColumn(c)
+            if(column.flat().clean("-").length === 8){
+                for(let i of nums){
+                    if(column.flat().includes(i)){
+                        nums[i-1] = 10
+                    }
+                }
+                moves.push([column.flat().indexOf("-"), c, nums.clean(10)[0]])
+            }
+        }
+
+
+
+        return moves
+    }
+
+    check_bxs(){
+        let moves = []
+
+        for(let box of this.board.boxes.flat()){
+            let val = 0
+            let nums = [...this.all_nums]
+            if(box.numbers.flat().clean("-").length === 8){
+                for(let i of nums){
+                    if(!box.numbers.flat().includes(i)){
+                        val = i
+                    }
+                }
+                moves.push([box.position[0]*3 + Math.floor(box.numbers.flat().indexOf("-")/3), box.position[1]*3 + box.numbers.flat().indexOf("-")%3, val])
+            }
+        }
+
+        return moves
+    }
+
     box_narrowing(){
         // let rows = []
         // let cols = []
@@ -388,8 +448,10 @@ let board = new Board(true, "000407050030600000070000003000000560000006020009705
 
 let solver = new Solver(board)
 
-let map = solver.find_possible()
-
 console.log(solver.solve())
+
+let map = solver.find_possible()
+console.log(JSON.parse(JSON.stringify(map)))
+console.log(solver.remove_cycles(JSON.parse(JSON.stringify(map))))
 
 console.log(board.validate())
