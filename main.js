@@ -319,8 +319,6 @@ class Solver{
                             if([c, c2].includes(e)) continue
                             let element = map[r][e]
                             if(element === "0") continue
-                            console.log(r)
-                            console.log(result[1])
                             result[1].forEach(n => element.remove(n));
                             if(element.length === 0){
                                 map[r][e] = "0"
@@ -335,11 +333,46 @@ class Solver{
                                 if([c, c2, c3].includes(e)) continue
                                 let element = map[r][e]
                                 if(element === "0") continue
-                                console.log(r + " (3 way)")
-                                console.log(result[1])
                                 result[1].forEach(n => element.remove(n));
                                 if(element.length === 0){
                                     map[r][e] = "0"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for(let c of Array(9).keys()){
+            for(let r of Array(9).keys()){
+                for(let r2 of Array(9).keys()){
+                    if(r === r2) continue
+                    let result = this.is_cycle([map[r][c], map[r2][c]])
+                    if(result[0]){
+                        console.log(c)
+                        console.log(result[1])
+                        for(let e of Array(map.length).keys()){
+                            if([r, r2].includes(e)) continue
+                            let element = map[e][c]
+                            if(element === "0") continue
+                            result[1].forEach(n => element.remove(n))
+                            if(element.length === 0){
+                                map[e][c] = "0"
+                            }
+                        }
+                    }
+                    for(let r3 of Array(9).keys()){
+                        if(r === r2 || r2 === r3 || r === r3) continue
+                        let result = this.is_cycle([map[r][c], map[r2][c], map[r3][c]])
+                        if(result[0]){
+                            for(let e of Array(map.length).keys()){
+                                if([r, r2, r3].includes(e)) continue
+                                let element = map[e][c]
+                                if(element === "0") continue
+                                result[1].forEach(n => element.remove(n))
+                                if(element.length === 0){
+                                    map[e][c] = "0"
                                 }
                             }
                         }
