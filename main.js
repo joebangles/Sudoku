@@ -19,6 +19,21 @@ Array.prototype.remove = function (value) {
     }
 }
 
+function* choose(array, n) {
+    if (n === 1) {
+        for (const a of array) {
+            yield [a];
+        }
+        return;
+    }
+
+    for (let i = 0; i <= array.length - n; i++) {
+        for (const c of choose(array.slice(i + 1), n - 1)) {
+            yield [array[i], ...c];
+        }
+    }
+}
+
 function printMap(map){
     let toPrint = ""
 
@@ -111,7 +126,6 @@ class Board{
         }
     }
 
-
     toString(){
         let toReturn = "\n"
 
@@ -122,14 +136,6 @@ class Board{
             toReturn += "\n"
         }
         return toReturn
-    }
-
-    printBoxes(){
-        for(let a of this.boxes){
-            for(let b of a){
-                console.log(b.numbers)
-            }
-        }
     }
 
     update(r, c, val){
@@ -174,6 +180,14 @@ class Board{
         }
         return valid
     }
+
+    printBoxes(){
+        for(let a of this.boxes){
+            for(let b of a){
+                console.log(b.numbers)
+            }
+        }
+    }
 }
 
 class Solver{
@@ -188,6 +202,7 @@ class Solver{
     }
 
     solve(its=1){
+        console.log("Round " + its)
         let moves = []
 
         //moves = moves.concat(this.check_crs())
@@ -256,13 +271,10 @@ class Solver{
                         total = total.clean(n)
                     }
                 }
-                console.log(r + " " + c + " " + total)
                 poss_map[r].push(total)
             }
         }
-        console.log(JSON.parse(JSON.stringify(poss_map)))
-        poss_map = this.remove_cycles(JSON.parse(JSON.stringify(poss_map)))
-        console.log(JSON.parse(JSON.stringify(poss_map)))
+        poss_map = this.remove_cycles(poss_map)
 
         return poss_map
     }
@@ -320,116 +332,147 @@ class Solver{
     }
 
     remove_cycles(map){
-        for(let r of Array(9).keys()){
-            for(let c of Array(9).keys()){
-                // For each item in a row
-                // Compare to each other item
-                for(let c2 of Array(9).keys()){
-                    if(c === c2) continue
-                    let result = this.is_cycle([map[r][c], map[r][c2]])
-                    if(result[0]){
-                        console.log("Row " + r + " cycle of " + [c, c2])
-                        for(let e of Array(map[r].length).keys()){
-                            if([c, c2].includes(e)) continue
-                            let element = map[r][e]
-                            if(element === "0") continue
-                            result[1].forEach(n => element.remove(n));
-                            if(element.length === 0){
-                                map[r][e] = "0"
-                            }
-                        }
-                    }
-                    for(let c3 of Array(9).keys()){
-                        if(c === c2 || c2 === c3 || c === c3) continue
-                        let result = this.is_cycle([map[r][c], map[r][c2], map[r][c3]])
-                        if(result[0]){
-                            console.log("Row " + r + " cycle of " + [c, c2, c3])
-                            for(let e of Array(map[r].length).keys()){
-                                if([c, c2, c3].includes(e)) continue
-                                let element = map[r][e]
-                                if(element === "0") continue
-                                result[1].forEach(n => element.remove(n));
-                                if(element.length === 0){
-                                    map[r][e] = "0"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        for(let i of Array(9).keys()){
+            let row_map = map[i]
+            this.loop_boxes(row_map, i)
+
+            let col_map = map.map(m => m[i])
+            this.loop_boxes(col_map, i)
+
+            let box_map = map.flat().filter((e, index) => {
+                return Math.floor(index/27) === Math.floor(i/3) && Math.floor((index%9)/3) === i%3
+            })
+            this.loop_boxes(box_map, i)
         }
 
-        for(let c of Array(9).keys()){
-            for(let r of Array(9).keys()){
-                for(let r2 of Array(9).keys()){
-                    if(r === r2) continue
-                    let result = this.is_cycle([map[r][c], map[r2][c]])
-                    if(result[0]){
-                        console.log("Column " + c + " cycle of " + [r, r2])
-                        for(let e of Array(map.length).keys()){
-                            if([r, r2].includes(e)) continue
-                            let element = map[e][c]
-                            if(element === "0") continue
-                            result[1].forEach(n => element.remove(n))
-                            if(element.length === 0){
-                                map[e][c] = "0"
-                            }
-                        }
-                    }
-                    for(let r3 of Array(9).keys()){
-                        if(r === r2 || r2 === r3 || r === r3) continue
-                        let result = this.is_cycle([map[r][c], map[r2][c], map[r3][c]])
-                        if(result[0]){
-                            console.log("Column " + c + " cycle of " + [r, r2, r3])
-                            for(let e of Array(map.length).keys()){
-                                if([r, r2, r3].includes(e)) continue
-                                let element = map[e][c]
-                                if(element === "0") continue
-                                result[1].forEach(n => element.remove(n))
-                                if(element.length === 0){
-                                    map[e][c] = "0"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        for(let box of this.board.boxes.flat()){
-            for(let i1 of Array(9).keys()){
-                for(let i2 of Array(9).keys()){
-                    if(i1 === i2) continue;
-                    let result = this.is_cycle([map[box.position[0]*3 + Math.floor(i1/3)][box.position[1]*3 + i1%3], map[box.position[0]*3 + Math.floor(i2/3)][box.position[1]*3 + i2%3]])
-                    if(result[0]){
-                        console.log("Box " + box.position + " cycle of 2")
-                        for(let e of Array(9).keys()){
-                            if([i1, i2].includes(e)) continue
-                            let element = map[box.position[0]*3 + Math.floor(e/3)][box.position[1]*3 + e%3]
-                            if(element === "0") continue
-                            result[1].forEach(n => element.remove(n))
-                        }
-                    }
-                    for(let i3 of Array(9).keys()){
-                        if(i1 === i2 || i2 === i3 || i1 === i3) continue
-                        let result = this.is_cycle([map[box.position[0]*3 + Math.floor(i1/3)][box.position[1]*3 + i1%3],
-                                                           map[box.position[0]*3 + Math.floor(i2/3)][box.position[1]*3 + i2%3],
-                                                           map[box.position[0]*3 + Math.floor(i3/3)][box.position[1]*3 + i3%3]])
-                        if(result[0]){
-                            console.log("Box " + box.position + " cycle of 3")
-                            for(let e of Array(9).keys()){
-                                if([i1, i2, i3].includes(e)) continue
-                                let element = map[box.position[0]*3 + Math.floor(e/3)][box.position[1]*3 + e%3]
-                                if(element === "0") continue
-                                result[1].forEach(n => element.remove(n))
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        // for(let r of Array(9).keys()){
+        //     for(let c of Array(9).keys()){
+        //         // For each item in a row
+        //         // Compare to each other item
+        //         for(let c2 of Array(9).keys()){
+        //             if(c === c2) continue
+        //             let result = this.is_cycle([map[r][c], map[r][c2]])
+        //             if(result[0]){
+        //                 console.log("Row " + r + " cycle of " + [c, c2])
+        //                 for(let e of Array(map[r].length).keys()){
+        //                     if([c, c2].includes(e)) continue
+        //                     let element = map[r][e]
+        //                     if(element === "0") continue
+        //                     result[1].forEach(n => element.remove(n));
+        //                     if(element.length === 0){
+        //                         map[r][e] = "0"
+        //                     }
+        //                 }
+        //             }
+        //             for(let c3 of Array(9).keys()){
+        //                 if(c === c2 || c2 === c3 || c === c3) continue
+        //                 let result = this.is_cycle([map[r][c], map[r][c2], map[r][c3]])
+        //                 if(result[0]){
+        //                     console.log("Row " + r + " cycle of " + [c, c2, c3])
+        //                     for(let e of Array(map[r].length).keys()){
+        //                         if([c, c2, c3].includes(e)) continue
+        //                         let element = map[r][e]
+        //                         if(element === "0") continue
+        //                         result[1].forEach(n => element.remove(n));
+        //                         if(element.length === 0){
+        //                             map[r][e] = "0"
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+        //
+        // for(let c of Array(9).keys()){
+        //     for(let r of Array(9).keys()){
+        //         for(let r2 of Array(9).keys()){
+        //             if(r === r2) continue
+        //             let result = this.is_cycle([map[r][c], map[r2][c]])
+        //             if(result[0]){
+        //                 console.log("Column " + c + " cycle of " + [r, r2])
+        //                 for(let e of Array(map.length).keys()){
+        //                     if([r, r2].includes(e)) continue
+        //                     let element = map[e][c]
+        //                     if(element === "0") continue
+        //                     result[1].forEach(n => element.remove(n))
+        //                     if(element.length === 0){
+        //                         map[e][c] = "0"
+        //                     }
+        //                 }
+        //             }
+        //             for(let r3 of Array(9).keys()){
+        //                 if(r === r2 || r2 === r3 || r === r3) continue
+        //                 let result = this.is_cycle([map[r][c], map[r2][c], map[r3][c]])
+        //                 if(result[0]){
+        //                     console.log("Column " + c + " cycle of " + [r, r2, r3])
+        //                     for(let e of Array(map.length).keys()){
+        //                         if([r, r2, r3].includes(e)) continue
+        //                         let element = map[e][c]
+        //                         if(element === "0") continue
+        //                         result[1].forEach(n => element.remove(n))
+        //                         if(element.length === 0){
+        //                             map[e][c] = "0"
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+        //
+        // for(let box of this.board.boxes.flat()){
+        //     for(let i1 of Array(9).keys()){
+        //         for(let i2 of Array(9).keys()){
+        //             if(i1 === i2) continue;
+        //             let result = this.is_cycle([map[box.position[0]*3 + Math.floor(i1/3)][box.position[1]*3 + i1%3], map[box.position[0]*3 + Math.floor(i2/3)][box.position[1]*3 + i2%3]])
+        //             if(result[0]){
+        //                 console.log("Box " + box.position + " cycle of 2")
+        //                 for(let e of Array(9).keys()){
+        //                     if([i1, i2].includes(e)) continue
+        //                     let element = map[box.position[0]*3 + Math.floor(e/3)][box.position[1]*3 + e%3]
+        //                     if(element === "0") continue
+        //                     result[1].forEach(n => element.remove(n))
+        //                 }
+        //             }
+        //             for(let i3 of Array(9).keys()){
+        //                 if(i1 === i2 || i2 === i3 || i1 === i3) continue
+        //                 let result = this.is_cycle([map[box.position[0]*3 + Math.floor(i1/3)][box.position[1]*3 + i1%3],
+        //                                                    map[box.position[0]*3 + Math.floor(i2/3)][box.position[1]*3 + i2%3],
+        //                                                    map[box.position[0]*3 + Math.floor(i3/3)][box.position[1]*3 + i3%3]])
+        //                 if(result[0]){
+        //                     console.log("Box " + box.position + " cycle of 3")
+        //                     for(let e of Array(9).keys()){
+        //                         if([i1, i2, i3].includes(e)) continue
+        //                         let element = map[box.position[0]*3 + Math.floor(e/3)][box.position[1]*3 + e%3]
+        //                         if(element === "0") continue
+        //                         result[1].forEach(n => element.remove(n))
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
         return map
+    }
+
+    loop_boxes(maps, r){
+        for(let size of [2,3,4,5]) {
+            for (let combo of choose([...Array(maps.length).keys()], size)) {
+                let result = []
+                combo.forEach(c => result.push(maps[c]))
+
+                let cycle = this.is_cycle(result)
+                if (cycle[0]) {
+                    for (let e of Array(9).keys()) {
+                        let element = maps[e]
+                        if (combo.toString().includes(e.toString()) || element === "0") continue
+                        cycle[1].forEach(n => element.remove(n))
+                    }
+                }
+            }
+        }
     }
 
     is_cycle(profiles) {
@@ -527,11 +570,15 @@ class Solver{
 
 // Medium 000407050030600000070000003000000560000006020009705040050008100803100405000900000
 
-let board = new Board(true, "020709000000000002003000480050000000000105000214000900000080190081050760000003050");
+// FIRST MEDIUM EVER SOLVED -- 020709000000000002003000480050000000000105000214000900000080190081050760000003050
+
+// FIRST gODDAMN HARD PUZZLE SOLVED -- DIRECTLY AFTERWARDS -- 003010005800000200001600008030006080200040300070020050000000009040361000008000060
+
+let board = new Board(true, "003010005800000200001600008030006080200040300070020050000000009040361000008000060");
 
 
 let solver = new Solver(board)
 
 console.log(solver.solve())
 
-console.log(board.validate())
+//console.log(board.validate())

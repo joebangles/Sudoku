@@ -4,17 +4,15 @@ table {
     border-collapse: collapse;
 }
 #board {
-    height: 90vh;
-    width: 90vh;
+    height: 75vh;
+    width: 75vh;
 }
 td {
     color: black;
     border: 2px solid black;
     text-align: center;
-    width: 10vh;
-    height: 10vh;
     font-weight: bold;
-    font-size: 5vh;
+    font-size: 4vh;
     font-family: Verdana, serif;
 }
 .defined {
