@@ -1,6 +1,8 @@
 # Sudoku
 Solves Sudoku puzzles with visual HTML representation
 
+Accessible at quinnquinnquinn.com/sudoku
+
 Puzzle codes for easier access:
 
 Easy:  
