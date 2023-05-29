@@ -1,20 +1,43 @@
 table {
+    position: relative;
     margin-right: auto;
     margin-left: auto;
     border-collapse: collapse;
 }
+input {
+    position: relative;
+    width: 80vh;
+    margin-right: auto;
+    margin-left: auto;
+}
+form {
+    position: relative;
+    width: 80vh;
+    margin: 1vh auto;
+    padding: 0;
+}
+button {
+    position: relative;
+    width: 30vh;
+    margin: 1vh auto
+}
 #board {
-    height: 75vh;
-    width: 75vh;
+    height: 81vh;
+    width: 81vh;
 }
 td {
     color: black;
     border: 2px solid black;
     text-align: center;
     font-weight: bold;
+    width: 9vh;
+    height: 9vh;
     font-size: 4vh;
     font-family: Verdana, serif;
 }
 .defined {
     background-color: darkgray;
+}
+.empty {
+    color: lightgray;
 }

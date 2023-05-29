@@ -94,6 +94,8 @@ class Board{
             }
         }
 
+        console.log(this.numbers)
+
         if(this.visual) this.draw()
     }
 
@@ -106,23 +108,8 @@ class Board{
     }
 
     draw(){
-        let table = document.getElementById("board")
-
-        for (let r of Array(9).keys()) {
-            let row = document.createElement("tr")
-            row.id = "row " + r
-            table.appendChild(row)
-            for (let c of Array(9).keys()) {
-                let cell = document.createElement("td")
-                cell.innerHTML = this.numbers[r][c]
-                cell.id = r + " " + c
-
-                if(cell.innerHTML !== "-"){
-                    cell.classList.add("defined")
-                }
-
-                row.appendChild(cell)
-            }
+        for(let i of Array(81).keys()){
+            document.getElementById(Math.floor(i/9) + " " + (i%9)).innerHTML = this.numbers.flat()[i]
         }
     }
 
@@ -143,7 +130,7 @@ class Board{
         this.boxes[Math.floor(r/3)][Math.floor(c/3)].numbers[r%3][c%3] = val
 
         if(this.visual) document.getElementById(r + " " + c).innerHTML = val
-
+        console.log(document.getElementById(r + " " + c).innerHTML)
         return this.validate()
     }
 
@@ -228,7 +215,7 @@ class Solver{
         for(let m of moves){
             this.board.update(...m)
         }
-        if(!board.validate()){
+        if(!this.board.validate()){
             console.log("Invalid board generated (somehow)")
         }
         if(this.board.numbers.flat().length === this.board.numbers.flat().clean("-").length){
@@ -334,15 +321,15 @@ class Solver{
     remove_cycles(map){
         for(let i of Array(9).keys()){
             let row_map = map[i]
-            this.loop_boxes(row_map, i)
+            this.loop_boxes(row_map)
 
             let col_map = map.map(m => m[i])
-            this.loop_boxes(col_map, i)
+            this.loop_boxes(col_map)
 
             let box_map = map.flat().filter((e, index) => {
                 return Math.floor(index/27) === Math.floor(i/3) && Math.floor((index%9)/3) === i%3
             })
-            this.loop_boxes(box_map, i)
+            this.loop_boxes(box_map)
         }
 
         // for(let r of Array(9).keys()){
@@ -457,7 +444,7 @@ class Solver{
         return map
     }
 
-    loop_boxes(maps, r){
+    loop_boxes(maps){
         for(let size of [2,3,4,5]) {
             for (let combo of choose([...Array(maps.length).keys()], size)) {
                 let result = []
@@ -559,26 +546,56 @@ class Solver{
     }
 }
 
-// Easy:
-// 2 step 500467309903810427174203000231976854857124090496308172000089260782641005010000708
-// 2 step 051200090038079040290500006123600700870301054009008361400002015010860430060007920
-// 7 step 403000000680000500750003090500080130000090702017005006060138940009052060030907825
+function updateValue(e){
+    let count = 0
+    for(let y of Array(9).keys()){
+        for(let x of Array(9).keys()){
+            document.getElementById(y + " " + x).innerHTML = "-"
+            document.getElementById(y + " " + x).className = "empty"
+        }
+    }
+    for(let char of e.target.value){
+        if([...Array(9).keys()].map(m => m+1).includes(parseInt(char))){
+            document.getElementById(Math.floor(count/9) + " " + count%9).innerHTML = char
+            document.getElementById(Math.floor(count/9) + " " + count%9).className = ""
+        }
+        else{
+            document.getElementById(Math.floor(count/9) + " " + count%9).className = ""
+        }
+        count++
+        if(count > 81){
+            return
+        }
+    }
+}
 
-// NYT
-// Easy 3 moves only_possible- 040005207095127000721000090000350104017060830402010005100643000000501403370000051
-// Easy 670000045000369000080400601500670098007038006826000050408000360760923800012006070
+let table = document.getElementById("board")
 
-// Medium 000407050030600000070000003000000560000006020009705040050008100803100405000900000
+for (let r of Array(9).keys()) {
+    let row = document.createElement("tr")
+    row.id = "row " + r
+    table.appendChild(row)
+    for (let c of Array(9).keys()) {
+        let cell = document.createElement("td")
+        cell.innerHTML = "-"
+        cell.id = r + " " + c
+        cell.className = "empty"
 
-// FIRST MEDIUM EVER SOLVED -- 020709000000000002003000480050000000000105000214000900000080190081050760000003050
+        row.appendChild(cell)
+    }
+}
 
-// FIRST gODDAMN HARD PUZZLE SOLVED -- DIRECTLY AFTERWARDS -- 003010005800000200001600008030006080200040300070020050000000009040361000008000060
+function foo(){
+    let board = new Board(true, document.getElementById("numbers").value)
+    let solver = new Solver(board)
+    console.log(solver.solve())
+}
 
-let board = new Board(true, "003010005800000200001600008030006080200040300070020050000000009040361000008000060");
+document.getElementById("solve").addEventListener('click', function () {
+    foo();
+})
 
-
-let solver = new Solver(board)
-
-console.log(solver.solve())
-
+document.getElementById("numbers").addEventListener('input', updateValue);
 //console.log(board.validate())
+
+
