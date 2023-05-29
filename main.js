@@ -445,7 +445,7 @@ class Solver{
     }
 
     loop_boxes(maps){
-        for(let size of [2,3,4,5]) {
+        for(let size = 2; size <= maps.clean("1").length - 1; size++) {
             for (let combo of choose([...Array(maps.length).keys()], size)) {
                 let result = []
                 combo.forEach(c => result.push(maps[c]))
@@ -557,7 +557,7 @@ function updateValue(e){
     for(let char of e.target.value){
         if([...Array(9).keys()].map(m => m+1).includes(parseInt(char))){
             document.getElementById(Math.floor(count/9) + " " + count%9).innerHTML = char
-            document.getElementById(Math.floor(count/9) + " " + count%9).className = ""
+            document.getElementById(Math.floor(count/9) + " " + count%9).className = "defined"
         }
         else{
             document.getElementById(Math.floor(count/9) + " " + count%9).className = ""
@@ -585,17 +585,11 @@ for (let r of Array(9).keys()) {
     }
 }
 
-function foo(){
+document.getElementById("solve").addEventListener('click', function () {
     let board = new Board(true, document.getElementById("numbers").value)
     let solver = new Solver(board)
     console.log(solver.solve())
-}
-
-document.getElementById("solve").addEventListener('click', function () {
-    foo();
 })
 
+
 document.getElementById("numbers").addEventListener('input', updateValue);
-//console.log(board.validate())
-
-
