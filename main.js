@@ -19,6 +19,19 @@ Array.prototype.remove = function (value) {
     }
 }
 
+function printMap(map){
+    let toPrint = ""
+
+    for(let r of Array(9).keys()){
+        toPrint += (r%3===0) ? "\n\n\n" : "\n"
+        for(let c of Array(9).keys()){
+            toPrint+= (map[r][c] instanceof Array) ? map[r][c].length : 0
+            if(c%3===2) toPrint += " "
+        }
+    }
+
+    return toPrint + "\n"
+}
 
 class Box{
     constructor(r, c){
@@ -174,7 +187,7 @@ class Solver{
         }
     }
 
-    solve(its=0){
+    solve(its=1){
         let moves = []
 
         //moves = moves.concat(this.check_crs())
@@ -197,7 +210,6 @@ class Solver{
             return [false, its]
         }
 
-        console.log(moves)
         for(let m of moves){
             this.board.update(...m)
         }
@@ -210,7 +222,6 @@ class Solver{
         }
         return this.solve(its+1)
     }
-
 
     one_option(map){
         let moves = []
@@ -240,16 +251,18 @@ class Solver{
                 let col = this.board.getColumn(c)
                 let box_contents = this.board.boxes[Math.floor(r/3)][Math.floor(c/3)].numbers.flat()
 
-
                 for(let n of row.clean("-").concat(col.clean("-").concat(box_contents.clean("-")))){
                     if(total.indexOf(n) > -1){
                         total = total.clean(n)
                     }
                 }
+                console.log(r + " " + c + " " + total)
                 poss_map[r].push(total)
             }
         }
-        // poss_map = this.remove_cycles(poss_map)
+        console.log(JSON.parse(JSON.stringify(poss_map)))
+        poss_map = this.remove_cycles(JSON.parse(JSON.stringify(poss_map)))
+        console.log(JSON.parse(JSON.stringify(poss_map)))
 
         return poss_map
     }
@@ -315,6 +328,7 @@ class Solver{
                     if(c === c2) continue
                     let result = this.is_cycle([map[r][c], map[r][c2]])
                     if(result[0]){
+                        console.log("Row " + r + " cycle of " + [c, c2])
                         for(let e of Array(map[r].length).keys()){
                             if([c, c2].includes(e)) continue
                             let element = map[r][e]
@@ -329,6 +343,7 @@ class Solver{
                         if(c === c2 || c2 === c3 || c === c3) continue
                         let result = this.is_cycle([map[r][c], map[r][c2], map[r][c3]])
                         if(result[0]){
+                            console.log("Row " + r + " cycle of " + [c, c2, c3])
                             for(let e of Array(map[r].length).keys()){
                                 if([c, c2, c3].includes(e)) continue
                                 let element = map[r][e]
@@ -350,8 +365,7 @@ class Solver{
                     if(r === r2) continue
                     let result = this.is_cycle([map[r][c], map[r2][c]])
                     if(result[0]){
-                        console.log(c)
-                        console.log(result[1])
+                        console.log("Column " + c + " cycle of " + [r, r2])
                         for(let e of Array(map.length).keys()){
                             if([r, r2].includes(e)) continue
                             let element = map[e][c]
@@ -366,6 +380,7 @@ class Solver{
                         if(r === r2 || r2 === r3 || r === r3) continue
                         let result = this.is_cycle([map[r][c], map[r2][c], map[r3][c]])
                         if(result[0]){
+                            console.log("Column " + c + " cycle of " + [r, r2, r3])
                             for(let e of Array(map.length).keys()){
                                 if([r, r2, r3].includes(e)) continue
                                 let element = map[e][c]
@@ -374,6 +389,39 @@ class Solver{
                                 if(element.length === 0){
                                     map[e][c] = "0"
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for(let box of this.board.boxes.flat()){
+            for(let i1 of Array(9).keys()){
+                for(let i2 of Array(9).keys()){
+                    if(i1 === i2) continue;
+                    let result = this.is_cycle([map[box.position[0]*3 + Math.floor(i1/3)][box.position[1]*3 + i1%3], map[box.position[0]*3 + Math.floor(i2/3)][box.position[1]*3 + i2%3]])
+                    if(result[0]){
+                        console.log("Box " + box.position + " cycle of 2")
+                        for(let e of Array(9).keys()){
+                            if([i1, i2].includes(e)) continue
+                            let element = map[box.position[0]*3 + Math.floor(e/3)][box.position[1]*3 + e%3]
+                            if(element === "0") continue
+                            result[1].forEach(n => element.remove(n))
+                        }
+                    }
+                    for(let i3 of Array(9).keys()){
+                        if(i1 === i2 || i2 === i3 || i1 === i3) continue
+                        let result = this.is_cycle([map[box.position[0]*3 + Math.floor(i1/3)][box.position[1]*3 + i1%3],
+                                                           map[box.position[0]*3 + Math.floor(i2/3)][box.position[1]*3 + i2%3],
+                                                           map[box.position[0]*3 + Math.floor(i3/3)][box.position[1]*3 + i3%3]])
+                        if(result[0]){
+                            console.log("Box " + box.position + " cycle of 3")
+                            for(let e of Array(9).keys()){
+                                if([i1, i2, i3].includes(e)) continue
+                                let element = map[box.position[0]*3 + Math.floor(e/3)][box.position[1]*3 + e%3]
+                                if(element === "0") continue
+                                result[1].forEach(n => element.remove(n))
                             }
                         }
                     }
@@ -475,16 +523,15 @@ class Solver{
 
 // NYT
 // Easy 3 moves only_possible- 040005207095127000721000090000350104017060830402010005100643000000501403370000051
+// Easy 670000045000369000080400601500670098007038006826000050408000360760923800012006070
 
-let board = new Board(true, "000407050030600000070000003000000560000006020009705040050008100803100405000900000");
+// Medium 000407050030600000070000003000000560000006020009705040050008100803100405000900000
+
+let board = new Board(true, "020709000000000002003000480050000000000105000214000900000080190081050760000003050");
 
 
 let solver = new Solver(board)
 
 console.log(solver.solve())
-
-let map = solver.find_possible()
-console.log(JSON.parse(JSON.stringify(map)))
-console.log(solver.remove_cycles(JSON.parse(JSON.stringify(map))))
 
 console.log(board.validate())
